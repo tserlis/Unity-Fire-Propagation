@@ -6,13 +6,15 @@ public class PlayerMovement : MonoBehaviour
 {
 
     public CharacterController controller;
+    public Transform groundCheck;
+    public Transform mantlePoint;
 
     public float speed = 10f;
     public float gravity = -9.81f;
     public float jumpHeight = 10f;
 
-    public Transform groundCheck;
     public float groundDistance = 0.4f;
+    public float mantleRange = 1.25f;
     public LayerMask groundMask; 
 
     private Vector3 velocity;
@@ -41,8 +43,32 @@ public class PlayerMovement : MonoBehaviour
 
         controller.Move(move * speed * Time.deltaTime);
 
+        //Add Jump height
         if (Input.GetButtonDown("Jump") && isGrounded) {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+
+        //Mantle Ability
+        if (Input.GetButton("Jump") && !isGrounded) {
+            //Fire Ray In Front of Player
+            int layerMask = 1 << 8;
+            layerMask = ~layerMask;
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, mantleRange, layerMask)) {
+                Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
+                Debug.Log("Mantle Ray Hit!");
+                if (hit.collider.bounds.Contains(mantlePoint.position) == false) {
+                    Debug.Log("Mantling"); 
+                    controller.enabled = false;
+                    Vector3 mantleMove = transform.up * mantlePoint.position.y + transform.forward * (mantlePoint.position.z+1);
+                    transform.Translate(mantleMove, Space.World);
+                    controller.enabled = true;
+                }
+            }
+            else {
+                Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * mantleRange, Color.red);
+                Debug.Log("Mantle Ray Miss");
+            }
         }
 
         velocity.y += gravity * Time.deltaTime;
