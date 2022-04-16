@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     public CharacterController controller;
     public Transform groundCheck;
     public Transform mantlePoint;
+    public Animator animator;
 
 #endregion
 
@@ -95,14 +96,21 @@ public class PlayerMovement : MonoBehaviour
                 break;
 
             case State.MANTLING:
-                Debug.Log("Mantling"); 
+                Debug.Log("Mantling");
+                animator.SetTrigger("Mantle Trigger");
                 controller.enabled = false;
-                Vector3 mantleMove = new Vector3(0, 4, 2);
+                /*Vector3 mantleMove = new Vector3(0, 4, 2);
                 transform.Translate(mantleMove);
-                controller.enabled = true;
-                velocity.y = -2f;       //have to reset velocity or else jumping velocity will still be applied post-mantle
+                velocity.y = -2f;       //have to reset velocity or else jumping velocity will still be applied post-mantle 
+                */
                 state = State.STANDING;
                 break;
         }
     }
+
+    public void ResetState() 
+    {
+        controller.enabled = true;
+    }
+
 }
