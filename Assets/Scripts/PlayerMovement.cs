@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     private enum State {
         STANDING,
         MANTLING,
+        LEANING,
     }
 
 #region Object Components
@@ -15,6 +16,7 @@ public class PlayerMovement : MonoBehaviour
     public Transform groundCheck;
     public Transform mantlePoint;
     public Animator animator;
+    public Transform cam;
 
 #endregion
 
@@ -23,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 10f;
     public float gravity = -9.81f;
     public float jumpHeight = 10f;
+    public float leanDistance = 1f;
 
     public float groundDistance = 0.4f;
     public float mantleRange = 1.25f;
@@ -34,6 +37,8 @@ public class PlayerMovement : MonoBehaviour
     private bool isGrounded;
 
     private int layerMask = 1 << 8;
+
+    private Vector3 defaultCamPos;
     
 
 #endregion
@@ -41,6 +46,7 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        defaultCamPos = cam.position;
         state = State.STANDING;
         layerMask = ~layerMask;
     }
@@ -93,17 +99,41 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
                 #endregion
+
+                #region Transition to Leaning
+                else if ((Input.GetKeyDown(KeyCode.E) ^ Input.GetKeyDown(KeyCode.Q)) && isGrounded)
+                {
+                    Vector3 camMove = new Vector3(0, 0, 0);
+                    if (Input.GetKeyDown(KeyCode.E)) {
+                        camMove = new Vector3(1, 0, 0);
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Q)) {
+                        camMove = new Vector3(-1, 0, 0);
+                    }
+                    defaultCamPos = cam.position;
+                    cam.Translate(camMove);
+                    state = State.LEANING;
+                }
+                #endregion
                 break;
 
             case State.MANTLING:
                 Debug.Log("Mantling");
                 animator.SetTrigger("Mantle Trigger");
                 controller.enabled = false;
-                /*Vector3 mantleMove = new Vector3(0, 4, 2);
-                transform.Translate(mantleMove);
-                velocity.y = -2f;       //have to reset velocity or else jumping velocity will still be applied post-mantle 
-                */
                 state = State.STANDING;
+                break;
+            
+            case State.LEANING:
+                Debug.Log("Leaning");
+                if (Input.GetKeyUp(KeyCode.Q) && cam.localPosition.x < defaultCamPos.x) {
+                    cam.position = defaultCamPos;
+                    state = State.STANDING;
+                }
+                else if (Input.GetKeyUp(KeyCode.E) && cam.localPosition.x > defaultCamPos.x) {
+                    cam.position = defaultCamPos;
+                    state = State.STANDING;
+                }
                 break;
         }
     }
