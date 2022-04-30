@@ -27,6 +27,8 @@ public class PlayerMovement : MonoBehaviour
     public float jumpHeight = 10f;
     public float leanDistance = 1f;
 
+    private int leanDirection = 0;
+
     public float groundDistance = 0.4f;
     public float mantleRange = 1.25f;
     public LayerMask groundMask; 
@@ -103,6 +105,16 @@ public class PlayerMovement : MonoBehaviour
                 #region Transition to Leaning
                 else if ((Input.GetKeyDown(KeyCode.E) ^ Input.GetKeyDown(KeyCode.Q)) && isGrounded)
                 {
+                    state = State.LEANING;
+                    if (Input.GetKeyDown(KeyCode.E)) {
+                        animator.setInt("Lean Direction", -1);
+                        leanDirection = -1;
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Q)) {
+                        animator.setInt("Lean Direction", 1);
+                        leanDirection = 1;
+                    }
+                    /*
                     Vector3 camMove = new Vector3(0, 0, 0);
                     if (Input.GetKeyDown(KeyCode.E)) {
                         camMove = new Vector3(1, 0, 0);
@@ -113,6 +125,7 @@ public class PlayerMovement : MonoBehaviour
                     defaultCamPos = cam.position;
                     cam.Translate(camMove);
                     state = State.LEANING;
+                    */
                 }
                 #endregion
                 break;
@@ -126,6 +139,14 @@ public class PlayerMovement : MonoBehaviour
             
             case State.LEANING:
                 Debug.Log("Leaning");
+                animator.SetTrigger("Lean Trigger");
+                if ((leanDirection == -1 && Input.GetKeyUp(KeyCode.E)) || (leanDirection == 1 && Input.GetKeyUp(KeyCode.Q))) {
+                    animator.setTrigger("Unleaning");
+                    animator.setInt("Lean Direction", 0);
+                    state = State.STANDING;
+                }
+                
+                /*Debug.Log("Leaning");
                 if (Input.GetKeyUp(KeyCode.Q) && cam.localPosition.x < defaultCamPos.x) {
                     cam.position = defaultCamPos;
                     state = State.STANDING;
@@ -133,13 +154,14 @@ public class PlayerMovement : MonoBehaviour
                 else if (Input.GetKeyUp(KeyCode.E) && cam.localPosition.x > defaultCamPos.x) {
                     cam.position = defaultCamPos;
                     state = State.STANDING;
-                }
+                }*/
                 break;
         }
     }
 
     public void ResetState() 
     {
+        state = State.STANDING;
         controller.enabled = true;
     }
 
